@@ -1,33 +1,39 @@
+#![allow(unused)]
 mod core;
 
 use rust_decimal_macros::dec;
 use self::core::math::{Matrix};
 
 fn main() {
-    // todo: implement operations using macros
     // todo: compile-time size checks
     // todo: determinant (require indexing with checks)
     // todo: inverse (require determinant or gauss elimination)
     // todo: solve algebra
 
-    let x = matrix!
-    (
-        1;
-        2;
+    let a = matrix!(
+        1, 2, 3;
+        3, 4, 5;
+    );
+
+    let b = matrix!(
+        3, 2, 1;
+        5, 4, 3;
+    );
+
+    let c = matrix!(
         3;
-        5;
-        6;
+        2;
+        1;
     );
 
-    let y = matrix!
-    (
-             1,   2,   3, -4.5,   5;
-           0.0,   4, 3.6,    2,   1;
-             1, 2.1,   3,    4,   5;
-        1.3333,   4,   3,    2, 1.0;
-    );
+    let x = matrix!( a + b );
+    let y = matrix!( a - b );
+    let z = matrix!( a * c );
 
-    let t = &y * &x;
+    let w = matrix!( a + b ); // value of a & b is not dropped
 
-    dbg!(t);
+    let t = matrix!(a[0..1][0..1]); // inner-matrix
+    let k = matrix!(a[0..2][0..2]);
+
+    // dynamic indexing is still not possible...
 }

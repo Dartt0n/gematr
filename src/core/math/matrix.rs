@@ -4,24 +4,19 @@ use rust_decimal::Decimal;
 use rust_decimal_macros::dec;
 
 
-pub struct Matrix<const N: usize, const M: usize> {
-    value: [[Decimal; M]; N],
-}
+pub struct Matrix<const N: usize, const M: usize>(pub [[Decimal; M]; N]) ;
 
 #[macro_export]
-macro_rules! matrix { ($($($i:expr),+;)+)=>{ Matrix::from([$([$(dec!($i),)+],)+])}; }
+macro_rules! matrix {
+    ($A:tt[$rs:tt..$re:tt][$cs:tt..$ce:tt])=>{{
+        const C: usize = $ce-$cs; const R: usize = $re-$rs;
+        &Matrix::<R, C>::generate(|i, j| { $A.0[i+$rs][j+$cs] })
+    }};
+    ($A:tt$op:tt$B:tt)=>{ &($A$op$B) };
+    ($($($i:expr),+;)+)=>{ &Matrix([$([$(dec!($i),)+],)+]) };
+}
 
 impl<const N: usize, const M: usize> Matrix<N, M> {
-    pub fn from(value: [[Decimal; M]; N]) -> Self {
-        Self { value }
-    }
-    pub fn with(value: Decimal) -> Self {
-        Self { value: [[value; M]; N] }
-    }
-    pub fn zeros() -> Self {
-        Matrix::with(dec!(0.0))
-    }
-
     pub fn generate<F>(func: F) -> Self
         where F: Fn(usize, usize) -> Decimal {
         let mut value = [[dec!(0.0); M]; N];
@@ -30,18 +25,11 @@ impl<const N: usize, const M: usize> Matrix<N, M> {
                 value[i][j] = func(i, j);
             }
         }
-        Self { value }
+        Self(value)
     }
 
     pub fn transpose(&self) -> Matrix<M, N> {
-        let mut value = [[dec!(0.0); N]; M];
-        for i in 0..N {
-            for j in 0..M {
-                value[j][i] = self.value[i][j]
-            }
-        }
-
-        Matrix::from(value)
+        Matrix::generate(|i, j| { self.0[j][i] })
     }
 }
 
@@ -64,7 +52,7 @@ impl<'a, 'b, const N: usize, const M: usize> Add<&'b Matrix<N, M>> for &'a Matri
     type Output = Matrix<N, M>;
 
     fn add(self, rhs: &'b Matrix<N, M>) -> Self::Output {
-        Self::Output::generate(|i, j| { self.value[i][j] + rhs.value[i][j] })
+        Self::Output::generate(|i, j| { self.0[i][j] + rhs.0[i][j] })
     }
 }
 
@@ -72,7 +60,7 @@ impl<'a, 'b, const N: usize, const M: usize> Sub<&'b Matrix<N, M>> for &'a Matri
     type Output = Matrix<N, M>;
 
     fn sub(self, rhs: &'b Matrix<N, M>) -> Self::Output {
-        Self::Output::generate(|i, j| { self.value[i][j] - rhs.value[i][j] })
+        Self::Output::generate(|i, j| { self.0[i][j] - rhs.0[i][j] })
     }
 }
 
@@ -80,7 +68,7 @@ impl<const N: usize, const M: usize> AddAssign for Matrix<N, M> {
     fn add_assign(&mut self, rhs: Self) {
         for i in 0..N {
             for j in 0..M {
-                self.value[i][j] += rhs.value[i][j];
+                self.0[i][j] += rhs.0[i][j];
             }
         }
     }
@@ -90,7 +78,7 @@ impl<const N: usize, const M: usize> SubAssign for Matrix<N, M> {
     fn sub_assign(&mut self, rhs: Self) {
         for i in 0..N {
             for j in 0..M {
-                self.value[i][j] -= rhs.value[i][j];
+                self.0[i][j] -= rhs.0[i][j];
             }
         }
     }
@@ -101,7 +89,7 @@ impl<'a, 'b, const N: usize, const M: usize, const K: usize> Mul<&'b Matrix<M, K
 
     fn mul(self, rhs: &'b Matrix<M, K>) -> Self::Output {
         Matrix::<N, K>::generate(|i, k|
-            { (0..M).map(|j| { self.value[i][j] * rhs.value[j][k] }).sum() }
+            { (0..M).map(|j| { self.0[i][j] * rhs.0[j][k] }).sum() }
         )
     }
 }
@@ -110,7 +98,7 @@ impl<const N: usize, const M: usize> PartialEq for Matrix<N, M> {
     fn eq(&self, rhs: &Self) -> bool {
         for i in 0..N {
             for j in 0..M {
-                if self.value[i][j] != rhs.value[i][j] {
+                if self.0[i][j] != rhs.0[i][j] {
                     return false;
                 }
             }
@@ -126,9 +114,9 @@ impl<const N: usize, const M: usize> Debug for Matrix<N, M> {
 
         for i in 0..N {
             for j in 0..M - 1 {
-                write!(f, "{} ", self.value[i][j])?;
+                write!(f, "{} ", self.0[i][j])?;
             }
-            write!(f, "{}\n", self.value[i][M - 1])?;
+            write!(f, "{}\n", self.0[i][M - 1])?;
         }
 
         Ok(())
