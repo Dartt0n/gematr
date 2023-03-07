@@ -1,39 +1,15 @@
-#![allow(unused)]
-mod core;
+use std::fs;
 
-use rust_decimal_macros::dec;
-use self::core::math::{Matrix};
+mod parser;
 
 fn main() {
-    // todo: compile-time size checks
-    // todo: determinant (require indexing with checks)
-    // todo: inverse (require determinant or gauss elimination)
-    // todo: solve algebra
+    // Expression 1:
+    // Expression 2:
+    // Expression 3:
 
-    let a = matrix!(
-        1, 2, 3;
-        3, 4, 5;
-    );
+    // Task: Build Abstract Syntax Tree
+    // Goal: Check syntax, report errors, ready-to-go schema of expression
 
-    let b = matrix!(
-        3, 2, 1;
-        5, 4, 3;
-    );
-
-    let c = matrix!(
-        3;
-        2;
-        1;
-    );
-
-    let x = matrix!( a + b );
-    let y = matrix!( a - b );
-    let z = matrix!( a * c );
-
-    let w = matrix!( a + b ); // value of a & b is not dropped
-
-    let t = matrix!(a[0..1][0..1]); // inner-matrix
-    let k = matrix!(a[0..2][0..2]);
-
-    // dynamic indexing is still not possible...
+    let content = fs::read_to_string("examples/expr3.rth").expect("Failed to read file");
+    dbg!(parser::lexer::tokenize(content));
 }
