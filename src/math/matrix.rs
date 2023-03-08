@@ -1,10 +1,9 @@
-use std::fmt::{Debug, Formatter};
-use std::ops::{Add, AddAssign, Mul, Sub, SubAssign};
 use rust_decimal::Decimal;
 use rust_decimal_macros::dec;
+use std::fmt::{Debug, Formatter};
+use std::ops::{Add, AddAssign, Mul, Sub, SubAssign};
 
-
-pub struct Matrix<const N: usize, const M: usize>(pub [[Decimal; M]; N]) ;
+pub struct Matrix<const N: usize, const M: usize>(pub [[Decimal; M]; N]);
 
 #[macro_export]
 macro_rules! matrix {
@@ -18,7 +17,9 @@ macro_rules! matrix {
 
 impl<const N: usize, const M: usize> Matrix<N, M> {
     pub fn generate<F>(func: F) -> Self
-        where F: Fn(usize, usize) -> Decimal {
+    where
+        F: Fn(usize, usize) -> Decimal,
+    {
         let mut value = [[dec!(0.0); M]; N];
         for i in 0..N {
             for j in 0..M {
@@ -29,13 +30,13 @@ impl<const N: usize, const M: usize> Matrix<N, M> {
     }
 
     pub fn transpose(&self) -> Matrix<M, N> {
-        Matrix::generate(|i, j| { self.0[j][i] })
+        Matrix::generate(|i, j| self.0[j][i])
     }
 }
 
 impl<const N: usize> Matrix<N, N> {
     pub fn identity() -> Self {
-        Self::generate(|i, j| { if i == j { dec!(1) } else { dec!(0) } })
+        Self::generate(|i, j| if i == j { dec!(1) } else { dec!(0) })
     }
 
     pub fn determinant(self) -> f64 {
@@ -47,12 +48,11 @@ impl<const N: usize> Matrix<N, N> {
     }
 }
 
-
 impl<'a, 'b, const N: usize, const M: usize> Add<&'b Matrix<N, M>> for &'a Matrix<N, M> {
     type Output = Matrix<N, M>;
 
     fn add(self, rhs: &'b Matrix<N, M>) -> Self::Output {
-        Self::Output::generate(|i, j| { self.0[i][j] + rhs.0[i][j] })
+        Self::Output::generate(|i, j| self.0[i][j] + rhs.0[i][j])
     }
 }
 
@@ -60,7 +60,7 @@ impl<'a, 'b, const N: usize, const M: usize> Sub<&'b Matrix<N, M>> for &'a Matri
     type Output = Matrix<N, M>;
 
     fn sub(self, rhs: &'b Matrix<N, M>) -> Self::Output {
-        Self::Output::generate(|i, j| { self.0[i][j] - rhs.0[i][j] })
+        Self::Output::generate(|i, j| self.0[i][j] - rhs.0[i][j])
     }
 }
 
@@ -84,13 +84,13 @@ impl<const N: usize, const M: usize> SubAssign for Matrix<N, M> {
     }
 }
 
-impl<'a, 'b, const N: usize, const M: usize, const K: usize> Mul<&'b Matrix<M, K>> for &'a Matrix<N, M> {
+impl<'a, 'b, const N: usize, const M: usize, const K: usize> Mul<&'b Matrix<M, K>>
+    for &'a Matrix<N, M>
+{
     type Output = Matrix<N, K>;
 
     fn mul(self, rhs: &'b Matrix<M, K>) -> Self::Output {
-        Matrix::<N, K>::generate(|i, k|
-            { (0..M).map(|j| { self.0[i][j] * rhs.0[j][k] }).sum() }
-        )
+        Matrix::<N, K>::generate(|i, k| (0..M).map(|j| self.0[i][j] * rhs.0[j][k]).sum())
     }
 }
 
