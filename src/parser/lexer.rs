@@ -87,7 +87,7 @@ impl Token {
         }
     }
 
-    pub fn delimiter(delimiter: String, line:usize, column: usize) -> Token {
+    pub fn delimiter(delimiter: String, line: usize, column: usize) -> Token {
         Token {
             kind: TokenKind::Delimiter,
             value: delimiter,
@@ -98,7 +98,6 @@ impl Token {
         }
     }
 }
-
 
 pub fn tokenize(expression: String) -> Result<Vec<Token>, ()> {
     if expression.len() == 0 {
@@ -136,7 +135,11 @@ pub fn tokenize(expression: String) -> Result<Vec<Token>, ()> {
             }
 
             _ if current_number.len() != 0 => {
-                tokens.push(Token::literal(current_number.clone(), current_line, current_column - current_number.len() + 1));
+                tokens.push(Token::literal(
+                    current_number.clone(),
+                    current_line,
+                    current_column - current_number.len() + 1,
+                ));
                 current_number_dot_found = false;
                 current_number = String::new();
             }
@@ -155,7 +158,11 @@ pub fn tokenize(expression: String) -> Result<Vec<Token>, ()> {
             }
 
             _ if current_function.len() != 0 => {
-                tokens.push(Token::function(current_function.clone(), current_line, current_column - current_function.len() + 1));
+                tokens.push(Token::function(
+                    current_function.clone(),
+                    current_line,
+                    current_column - current_function.len() + 1,
+                ));
                 current_function = String::new();
             }
 
@@ -170,11 +177,29 @@ pub fn tokenize(expression: String) -> Result<Vec<Token>, ()> {
                 tokens.push(Token::parenthesis(char.to_string(), current_line, current_column));
             }
 
-            '-' | '+' => tokens.push(Token::operator(char.to_string(), Associativity::Left, OPERATOR_LOW_PRECEDENCE, current_line, current_column)),
+            '-' | '+' => tokens.push(Token::operator(
+                char.to_string(),
+                Associativity::Left,
+                OPERATOR_LOW_PRECEDENCE,
+                current_line,
+                current_column,
+            )),
 
-            '*' | '/' => tokens.push(Token::operator(char.to_string(), Associativity::Left, OPERATOR_MEDIUM_PRECEDENCE, current_line, current_column)),
+            '*' | '/' => tokens.push(Token::operator(
+                char.to_string(),
+                Associativity::Left,
+                OPERATOR_MEDIUM_PRECEDENCE,
+                current_line,
+                current_column,
+            )),
 
-            '^' => tokens.push(Token::operator(char.to_string(), Associativity::Right, OPERATOR_HIGH_PRECEDENCE, current_line, current_column)),
+            '^' => tokens.push(Token::operator(
+                char.to_string(),
+                Associativity::Right,
+                OPERATOR_HIGH_PRECEDENCE,
+                current_line,
+                current_column,
+            )),
 
             ',' => tokens.push(Token::separator(char.to_string(), current_line, current_column)),
 
@@ -186,11 +211,19 @@ pub fn tokenize(expression: String) -> Result<Vec<Token>, ()> {
     }
 
     if current_number.len() != 0 {
-        tokens.push(Token::literal(current_number.clone(), current_line, current_column - current_number.len() + 1));
+        tokens.push(Token::literal(
+            current_number.clone(),
+            current_line,
+            current_column - current_number.len() + 1,
+        ));
     }
 
     if current_function.len() != 0 {
-        tokens.push(Token::function(current_function.clone(), current_line, current_column - current_function.len() + 1))
+        tokens.push(Token::function(
+            current_function.clone(),
+            current_line,
+            current_column - current_function.len() + 1,
+        ))
     }
 
     return Ok(tokens);

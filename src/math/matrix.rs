@@ -84,9 +84,7 @@ impl<const N: usize, const M: usize> SubAssign for Matrix<N, M> {
     }
 }
 
-impl<'a, 'b, const N: usize, const M: usize, const K: usize> Mul<&'b Matrix<M, K>>
-    for &'a Matrix<N, M>
-{
+impl<'a, 'b, const N: usize, const M: usize, const K: usize> Mul<&'b Matrix<M, K>> for &'a Matrix<N, M> {
     type Output = Matrix<N, K>;
 
     fn mul(self, rhs: &'b Matrix<M, K>) -> Self::Output {

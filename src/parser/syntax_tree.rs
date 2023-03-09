@@ -1,20 +1,18 @@
-use std::cell::{Ref, RefCell};
+use crate::parser::lexer::Token;
+use anyhow::Result;
+use std::cell::RefCell;
 use std::collections::VecDeque;
 use std::rc::Rc;
-use crate::parser::lexer::Token;
-use anyhow::{anyhow, Result};
 
 #[derive(Debug)]
 pub struct SyntaxTree {
     children: Vec<Rc<RefCell<SyntaxTree>>>,
     value: Token,
-    parent: Option<Rc<RefCell<SyntaxTree>>>
+    parent: Option<Rc<RefCell<SyntaxTree>>>,
 }
 
-
-impl SyntaxTree{
+impl SyntaxTree {
     pub fn build(rpn_tokens: VecDeque<Token>) -> Result<SyntaxTree> {
         todo!("Build tree by parsing deque from the end");
     }
 }
-

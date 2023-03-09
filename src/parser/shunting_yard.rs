@@ -1,9 +1,10 @@
 use super::lexer::{Associativity, Token, TokenKind};
-use std::collections::VecDeque;
 use anyhow::{anyhow, Result};
+use std::collections::VecDeque;
 
 fn on_top<F>(stack: &VecDeque<Token>, func: F) -> bool
-    where F: Fn(&Token) -> bool
+where
+    F: Fn(&Token) -> bool,
 {
     stack.front().map_or(false, func)
 }
@@ -28,8 +29,10 @@ pub fn reorder(tokens: Vec<Token>) -> Result<VecDeque<Token>> {
             }
 
             TokenKind::Operator => {
-                while on_top(&stack, |t| t.precedence > token.precedence
-                    || t.precedence == token.precedence && token.associativity == Associativity::Left) {
+                while on_top(&stack, |t| {
+                    t.precedence > token.precedence
+                        || t.precedence == token.precedence && token.associativity == Associativity::Left
+                }) {
                     queue.push_back(stack.pop_front().unwrap())
                 }
 
