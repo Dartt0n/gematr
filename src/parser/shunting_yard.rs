@@ -1,7 +1,12 @@
 use super::lexer::{Associativity, Token, TokenKind};
 use std::collections::VecDeque;
-use crate::parser::lexer::{Coordinates, FUNCTION_PRECEDENCE};
 use anyhow::{anyhow, Result};
+
+fn on_top<F>(stack: &VecDeque<Token>, func: F) -> bool
+    where F: Fn(&Token) -> bool
+{
+    stack.front().map_or(false, func)
+}
 
 pub fn reorder(tokens: Vec<Token>) -> Result<VecDeque<Token>> {
     let mut stack = VecDeque::new();
@@ -12,13 +17,7 @@ pub fn reorder(tokens: Vec<Token>) -> Result<VecDeque<Token>> {
             TokenKind::Literal => queue.push_back(token),
 
             TokenKind::Function => {
-                queue.push_back(Token {
-                    kind: TokenKind::Delimiter,
-                    value: "#".to_string(),
-                    associativity: Associativity::Left,
-                    precedence: FUNCTION_PRECEDENCE,
-                    coordinates: Coordinates { line: 0, column: 0 },
-                });
+                queue.push_back(Token::delimiter("#".to_string(), 0, 0));
                 stack.push_front(token);
             }
 
@@ -68,10 +67,4 @@ pub fn reorder(tokens: Vec<Token>) -> Result<VecDeque<Token>> {
     }
 
     return Ok(queue);
-}
-
-fn on_top<F>(stack: &VecDeque<Token>, func: F) -> bool
-    where F: Fn(&Token) -> bool
-{
-    stack.front().map_or(false, func)
 }

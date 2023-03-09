@@ -32,7 +32,7 @@ pub struct Token {
 }
 
 impl Token {
-    fn literal(number: String, line: usize, column: usize) -> Token {
+    pub fn literal(number: String, line: usize, column: usize) -> Token {
         Token {
             kind: TokenKind::Literal,
             value: number,
@@ -43,7 +43,7 @@ impl Token {
         }
     }
 
-    fn function(function: String, line: usize, column: usize) -> Token {
+    pub fn function(function: String, line: usize, column: usize) -> Token {
         Token {
             kind: TokenKind::Function,
             value: function,
@@ -54,7 +54,7 @@ impl Token {
         }
     }
 
-    fn separator(separator: String, line: usize, column: usize) -> Token {
+    pub fn separator(separator: String, line: usize, column: usize) -> Token {
         Token {
             kind: TokenKind::Separator,
             value: separator,
@@ -65,7 +65,7 @@ impl Token {
         }
     }
 
-    fn operator(operator: String, assoc: Associativity, prec: usize, line: usize, column: usize) -> Token {
+    pub fn operator(operator: String, assoc: Associativity, prec: usize, line: usize, column: usize) -> Token {
         Token {
             kind: TokenKind::Operator,
             value: operator,
@@ -76,12 +76,23 @@ impl Token {
         }
     }
 
-    fn parenthesis(parenthesis: String, line: usize, column: usize) -> Token {
+    pub fn parenthesis(parenthesis: String, line: usize, column: usize) -> Token {
         Token {
             kind: TokenKind::Parenthesis,
             value: parenthesis,
             associativity: Associativity::Left,
             precedence: DEFAULT_PRECEDENCE,
+            line,
+            column,
+        }
+    }
+
+    pub fn delimiter(delimiter: String, line:usize, column: usize) -> Token {
+        Token {
+            kind: TokenKind::Delimiter,
+            value: delimiter,
+            associativity: Associativity::Left,
+            precedence: FUNCTION_PRECEDENCE,
             line,
             column,
         }
