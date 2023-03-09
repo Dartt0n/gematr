@@ -1,6 +1,6 @@
 use super::lexer::{Associativity, Token, TokenKind};
 use std::collections::VecDeque;
-use crate::parser::lexer::{Coordinates};
+use crate::parser::lexer::{Coordinates, FUNCTION_PRECEDENCE};
 use anyhow::{anyhow, Result};
 
 pub fn reorder(tokens: Vec<Token>) -> Result<VecDeque<Token>> {
@@ -16,21 +16,29 @@ pub fn reorder(tokens: Vec<Token>) -> Result<VecDeque<Token>> {
                     kind: TokenKind::Delimiter,
                     value: "#".to_string(),
                     associativity: Associativity::Left,
-                    precedence: 0,
+                    precedence: FUNCTION_PRECEDENCE,
                     coordinates: Coordinates { line: 0, column: 0 },
                 });
                 stack.push_front(token);
             }
 
-            TokenKind::Operator => {
-                while on_top(&stack, |t| t.precedence > token.precedence
-                    || t.precedence == token.precedence && token.associativity == Associativity::Left,
-                ) {
+            TokenKind::Separator => {
+                while on_top(&stack, |t| t.value != "(" && t.precedence >= token.precedence) {
                     queue.push_back(stack.pop_front().unwrap())
                 }
+            }
+
+            TokenKind::Operator => {
+                while on_top(&stack, |t| t.precedence > token.precedence
+                    || t.precedence == token.precedence && token.associativity == Associativity::Left) {
+                    queue.push_back(stack.pop_front().unwrap())
+                }
+
                 stack.push_front(token)
             }
+
             TokenKind::Parenthesis if token.value == "(" => stack.push_front(token),
+
             TokenKind::Parenthesis if token.value == ")" => {
                 while on_top(&stack, |t| t.value != "(") {
                     queue.push_back(stack.pop_front().unwrap())
@@ -47,7 +55,7 @@ pub fn reorder(tokens: Vec<Token>) -> Result<VecDeque<Token>> {
                 }
             }
 
-            _ => {}
+            _ => return Err(anyhow!("Unknown token: {:?}", token)),
         }
     }
 

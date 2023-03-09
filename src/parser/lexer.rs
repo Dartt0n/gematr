@@ -6,11 +6,11 @@ pub enum Associativity {
 
 #[derive(Debug, PartialEq, Clone)]
 pub enum TokenKind {
-    Operator, // +, -, /, * etc
-    Literal, // numbers
-    Parenthesis, // (, )
-    Separator, // , ;
-    Function, // max, min
+    Operator,
+    Literal,
+    Parenthesis,
+    Separator,
+    Function,
     Delimiter, // used to separate data, e.g. function arguments
 }
 
@@ -28,6 +28,13 @@ pub struct Token {
     pub precedence: usize,
     pub coordinates: Coordinates,
 }
+
+pub const DEFAULT_PRECEDENCE: usize = 0;
+pub const LITERAL_PRECEDENCE: usize = 1;
+pub const OPERATOR_LOW_PRECEDENCE: usize = 2;
+pub const OPERATOR_MEDIUM_PRECEDENCE: usize = 3;
+pub const OPERATOR_HIGH_PRECEDENCE: usize = 4;
+pub const FUNCTION_PRECEDENCE: usize = 5;
 
 
 pub fn tokenize(expression: String) -> Result<Vec<Token>, ()> {
@@ -70,7 +77,7 @@ pub fn tokenize(expression: String) -> Result<Vec<Token>, ()> {
                     kind: TokenKind::Literal,
                     value: current_number.clone(),
                     associativity: Associativity::Left,
-                    precedence: 1,
+                    precedence: LITERAL_PRECEDENCE,
                     coordinates: Coordinates {
                         line: current_line,
                         column: current_column - current_number.len(),
@@ -98,7 +105,7 @@ pub fn tokenize(expression: String) -> Result<Vec<Token>, ()> {
                     kind: TokenKind::Function,
                     value: current_function.clone(),
                     associativity: Associativity::Left,
-                    precedence: 1,
+                    precedence: FUNCTION_PRECEDENCE,
                     coordinates: Coordinates {
                         line: current_line,
                         column: current_column - current_function.len(),
@@ -119,7 +126,7 @@ pub fn tokenize(expression: String) -> Result<Vec<Token>, ()> {
                     kind: TokenKind::Parenthesis,
                     value: char.to_string(),
                     associativity: Associativity::Left,
-                    precedence: 0,
+                    precedence: DEFAULT_PRECEDENCE,
                     coordinates: Coordinates {
                         line: current_line,
                         column: current_column,
@@ -131,7 +138,7 @@ pub fn tokenize(expression: String) -> Result<Vec<Token>, ()> {
                 kind: TokenKind::Operator,
                 value: char.to_string(),
                 associativity: Associativity::Left,
-                precedence: 2,
+                precedence: OPERATOR_LOW_PRECEDENCE,
                 coordinates: Coordinates {
                     line: current_line,
                     column: current_column,
@@ -142,7 +149,7 @@ pub fn tokenize(expression: String) -> Result<Vec<Token>, ()> {
                 kind: TokenKind::Operator,
                 value: char.to_string(),
                 associativity: Associativity::Left,
-                precedence: 3,
+                precedence: OPERATOR_MEDIUM_PRECEDENCE,
                 coordinates: Coordinates {
                     line: current_line,
                     column: current_column,
@@ -153,7 +160,7 @@ pub fn tokenize(expression: String) -> Result<Vec<Token>, ()> {
                 kind: TokenKind::Operator,
                 value: char.to_string(),
                 associativity: Associativity::Right,
-                precedence: 4,
+                precedence: OPERATOR_HIGH_PRECEDENCE,
                 coordinates: Coordinates {
                     line: current_line,
                     column: current_column,
@@ -164,7 +171,7 @@ pub fn tokenize(expression: String) -> Result<Vec<Token>, ()> {
                 kind: TokenKind::Separator,
                 value: char.to_string(),
                 associativity: Associativity::Left,
-                precedence: 5,
+                precedence: DEFAULT_PRECEDENCE,
                 coordinates: Coordinates {
                     line: current_line,
                     column: current_column,
@@ -183,7 +190,7 @@ pub fn tokenize(expression: String) -> Result<Vec<Token>, ()> {
             kind: TokenKind::Literal,
             value: current_number.clone(),
             associativity: Associativity::Left,
-            precedence: 1,
+            precedence: LITERAL_PRECEDENCE,
             coordinates: Coordinates {
                 line: current_line,
                 column: current_column - current_number.len(),
@@ -196,7 +203,7 @@ pub fn tokenize(expression: String) -> Result<Vec<Token>, ()> {
             kind: TokenKind::Literal,
             value: current_function.clone(),
             associativity: Associativity::Left,
-            precedence: 1,
+            precedence: FUNCTION_PRECEDENCE,
             coordinates: Coordinates {
                 line: current_line,
                 column: current_column - current_function.len(),
