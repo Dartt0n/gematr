@@ -1,6 +1,7 @@
 use super::lexer::{Associativity, Token, TokenKind};
 use std::collections::VecDeque;
 use std::vec;
+use crate::parser::lexer::{Coordinates};
 
 pub fn reorder(tokens: Vec<Token>) -> Result<VecDeque<Token>, ()> {
     let mut stack = vec![]; // stack: push, pop, last
@@ -9,27 +10,38 @@ pub fn reorder(tokens: Vec<Token>) -> Result<VecDeque<Token>, ()> {
     for token in tokens {
         match token.kind {
             TokenKind::Literal => queue.push_back(token),
-            TokenKind::Function => stack.push(token),
+
+            TokenKind::Function => {
+                queue.push_back(Token{
+                    kind: TokenKind::Delimiter,
+                    value: "#".to_string(),
+                    associativity: Associativity::Left,
+                    precedence: 0,
+                    coordinates: Coordinates { line: 0, column: 0 },
+                });
+                stack.push(token);
+            }
+
             TokenKind::Operator => {
                 while stack.last().map_or(false, |t| {
                     t.precedence > token.precedence
                         || t.precedence == token.precedence
-                            && token.associativity == Associativity::Left
+                        && token.associativity == Associativity::Left
                 }) {
                     queue.push_back(stack.pop().unwrap())
                 }
                 stack.push(token)
             }
-            TokenKind::Parenthesis if token.value.as_str() == "(" => stack.push(token),
-            TokenKind::Parenthesis if token.value.as_str() == ")" => {
+            TokenKind::Parenthesis if token.value == "(" => stack.push(token),
+            TokenKind::Parenthesis if token.value == ")" => {
                 while stack.last().map_or(false, |t| {
-                    t.kind != TokenKind::Parenthesis && t.value.as_str() != "("
+                    t.kind != TokenKind::Parenthesis && t.value != "("
                 }) {
                     queue.push_back(stack.pop().unwrap())
                 }
 
                 if stack.last().map_or(false, |t| {
-                    t.kind == TokenKind::Parenthesis && t.value.as_str() == "("
+                    t.kind == TokenKind::Parenthesis && t.value == "("
                 }) {
                     stack.pop(); // discard left parenthesis
                 } else {
@@ -50,7 +62,7 @@ pub fn reorder(tokens: Vec<Token>) -> Result<VecDeque<Token>, ()> {
 
     while !stack.is_empty() {
         if stack.last().map_or(false, |t| {
-            t.kind == TokenKind::Parenthesis && t.value.as_str() == "("
+            t.kind == TokenKind::Parenthesis && t.value == "("
         }) {
             return Err(()); // todo handle error
         }

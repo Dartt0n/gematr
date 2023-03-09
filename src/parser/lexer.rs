@@ -1,25 +1,26 @@
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum Associativity {
     Left,
     Right,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum TokenKind {
-    Operator,
-    Literal,
-    Parenthesis,
-    Separator,
-    Function,
+    Operator, // +, -, /, * etc
+    Literal, // numbers
+    Parenthesis, // (, )
+    Separator, // , ;
+    Function, // max, min
+    Delimiter, // used to separate data, e.g. function arguments
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Coordinates {
-    line: usize,
-    column: usize,
+    pub line: usize,
+    pub column: usize,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Token {
     pub kind: TokenKind,
     pub value: String,
@@ -27,6 +28,7 @@ pub struct Token {
     pub precedence: usize,
     pub coordinates: Coordinates,
 }
+
 
 pub fn tokenize(expression: String) -> Result<Vec<Token>, ()> {
     if expression.len() == 0 {
