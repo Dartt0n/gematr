@@ -14,11 +14,12 @@ pub enum TokenKind {
     Delimiter, // used to separate data, e.g. function arguments
 }
 
-#[derive(Debug, Clone)]
-pub struct Coordinates {
-    pub line: usize,
-    pub column: usize,
-}
+pub const DEFAULT_PRECEDENCE: usize = 0;
+pub const LITERAL_PRECEDENCE: usize = 1;
+pub const OPERATOR_LOW_PRECEDENCE: usize = 2;
+pub const OPERATOR_MEDIUM_PRECEDENCE: usize = 3;
+pub const OPERATOR_HIGH_PRECEDENCE: usize = 4;
+pub const FUNCTION_PRECEDENCE: usize = 5;
 
 #[derive(Debug, Clone)]
 pub struct Token {
@@ -26,15 +27,66 @@ pub struct Token {
     pub value: String,
     pub associativity: Associativity,
     pub precedence: usize,
-    pub coordinates: Coordinates,
+    pub line: usize,
+    pub column: usize,
 }
 
-pub const DEFAULT_PRECEDENCE: usize = 0;
-pub const LITERAL_PRECEDENCE: usize = 1;
-pub const OPERATOR_LOW_PRECEDENCE: usize = 2;
-pub const OPERATOR_MEDIUM_PRECEDENCE: usize = 3;
-pub const OPERATOR_HIGH_PRECEDENCE: usize = 4;
-pub const FUNCTION_PRECEDENCE: usize = 5;
+impl Token {
+    fn literal(number: String, line: usize, column: usize) -> Token {
+        Token {
+            kind: TokenKind::Literal,
+            value: number,
+            associativity: Associativity::Left,
+            precedence: LITERAL_PRECEDENCE,
+            line,
+            column,
+        }
+    }
+
+    fn function(function: String, line: usize, column: usize) -> Token {
+        Token {
+            kind: TokenKind::Function,
+            value: function,
+            associativity: Associativity::Left,
+            precedence: FUNCTION_PRECEDENCE,
+            line,
+            column,
+        }
+    }
+
+    fn separator(separator: String, line: usize, column: usize) -> Token {
+        Token {
+            kind: TokenKind::Separator,
+            value: separator,
+            associativity: Associativity::Left,
+            precedence: DEFAULT_PRECEDENCE,
+            line,
+            column,
+        }
+    }
+
+    fn operator(operator: String, assoc: Associativity, prec: usize, line: usize, column: usize) -> Token {
+        Token {
+            kind: TokenKind::Operator,
+            value: operator,
+            associativity: assoc,
+            precedence: prec,
+            line,
+            column,
+        }
+    }
+
+    fn parenthesis(parenthesis: String, line: usize, column: usize) -> Token {
+        Token {
+            kind: TokenKind::Parenthesis,
+            value: parenthesis,
+            associativity: Associativity::Left,
+            precedence: DEFAULT_PRECEDENCE,
+            line,
+            column,
+        }
+    }
+}
 
 
 pub fn tokenize(expression: String) -> Result<Vec<Token>, ()> {
@@ -73,16 +125,7 @@ pub fn tokenize(expression: String) -> Result<Vec<Token>, ()> {
             }
 
             _ if current_number.len() != 0 => {
-                tokens.push(Token {
-                    kind: TokenKind::Literal,
-                    value: current_number.clone(),
-                    associativity: Associativity::Left,
-                    precedence: LITERAL_PRECEDENCE,
-                    coordinates: Coordinates {
-                        line: current_line,
-                        column: current_column - current_number.len(),
-                    },
-                });
+                tokens.push(Token::literal(current_number.clone(), current_line, current_column - current_number.len() + 1));
                 current_number_dot_found = false;
                 current_number = String::new();
             }
@@ -101,16 +144,7 @@ pub fn tokenize(expression: String) -> Result<Vec<Token>, ()> {
             }
 
             _ if current_function.len() != 0 => {
-                tokens.push(Token {
-                    kind: TokenKind::Function,
-                    value: current_function.clone(),
-                    associativity: Associativity::Left,
-                    precedence: FUNCTION_PRECEDENCE,
-                    coordinates: Coordinates {
-                        line: current_line,
-                        column: current_column - current_function.len(),
-                    },
-                });
+                tokens.push(Token::function(current_function.clone(), current_line, current_column - current_function.len() + 1));
                 current_function = String::new();
             }
 
@@ -122,61 +156,16 @@ pub fn tokenize(expression: String) -> Result<Vec<Token>, ()> {
             '\n' => current_line += 1,
 
             '(' | ')' => {
-                tokens.push(Token {
-                    kind: TokenKind::Parenthesis,
-                    value: char.to_string(),
-                    associativity: Associativity::Left,
-                    precedence: DEFAULT_PRECEDENCE,
-                    coordinates: Coordinates {
-                        line: current_line,
-                        column: current_column,
-                    },
-                });
+                tokens.push(Token::parenthesis(char.to_string(), current_line, current_column));
             }
 
-            '-' | '+' => tokens.push(Token {
-                kind: TokenKind::Operator,
-                value: char.to_string(),
-                associativity: Associativity::Left,
-                precedence: OPERATOR_LOW_PRECEDENCE,
-                coordinates: Coordinates {
-                    line: current_line,
-                    column: current_column,
-                },
-            }),
+            '-' | '+' => tokens.push(Token::operator(char.to_string(), Associativity::Left, OPERATOR_LOW_PRECEDENCE, current_line, current_column)),
 
-            '*' | '/' => tokens.push(Token {
-                kind: TokenKind::Operator,
-                value: char.to_string(),
-                associativity: Associativity::Left,
-                precedence: OPERATOR_MEDIUM_PRECEDENCE,
-                coordinates: Coordinates {
-                    line: current_line,
-                    column: current_column,
-                },
-            }),
+            '*' | '/' => tokens.push(Token::operator(char.to_string(), Associativity::Left, OPERATOR_MEDIUM_PRECEDENCE, current_line, current_column)),
 
-            '^' => tokens.push(Token {
-                kind: TokenKind::Operator,
-                value: char.to_string(),
-                associativity: Associativity::Right,
-                precedence: OPERATOR_HIGH_PRECEDENCE,
-                coordinates: Coordinates {
-                    line: current_line,
-                    column: current_column,
-                },
-            }),
+            '^' => tokens.push(Token::operator(char.to_string(), Associativity::Right, OPERATOR_HIGH_PRECEDENCE, current_line, current_column)),
 
-            ',' => tokens.push(Token {
-                kind: TokenKind::Separator,
-                value: char.to_string(),
-                associativity: Associativity::Left,
-                precedence: DEFAULT_PRECEDENCE,
-                coordinates: Coordinates {
-                    line: current_line,
-                    column: current_column,
-                },
-            }),
+            ',' => tokens.push(Token::separator(char.to_string(), current_line, current_column)),
 
             _ => {}
         }
@@ -186,29 +175,11 @@ pub fn tokenize(expression: String) -> Result<Vec<Token>, ()> {
     }
 
     if current_number.len() != 0 {
-        tokens.push(Token {
-            kind: TokenKind::Literal,
-            value: current_number.clone(),
-            associativity: Associativity::Left,
-            precedence: LITERAL_PRECEDENCE,
-            coordinates: Coordinates {
-                line: current_line,
-                column: current_column - current_number.len(),
-            },
-        })
+        tokens.push(Token::literal(current_number, current_line, current_column - current_number.len() + 1));
     }
 
     if current_function.len() != 0 {
-        tokens.push(Token {
-            kind: TokenKind::Literal,
-            value: current_function.clone(),
-            associativity: Associativity::Left,
-            precedence: FUNCTION_PRECEDENCE,
-            coordinates: Coordinates {
-                line: current_line,
-                column: current_column - current_function.len(),
-            },
-        })
+        tokens.push(Token::function(current_function, current_line, current_column - current_function.len() + 1))
     }
 
     return Ok(tokens);
