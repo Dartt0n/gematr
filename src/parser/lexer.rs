@@ -20,11 +20,12 @@ pub const OPERATOR_LOW_PRECEDENCE: usize = 2;
 pub const OPERATOR_MEDIUM_PRECEDENCE: usize = 3;
 pub const OPERATOR_HIGH_PRECEDENCE: usize = 4;
 pub const FUNCTION_PRECEDENCE: usize = 5;
+pub const UNARY_OPERATOR_PRECEDENCE: usize = 6;
 
 #[derive(Debug, Clone)]
 pub struct Token {
     pub kind: TokenKind,
-    pub value: String,
+    pub value: String, // todo: Switch to Enum
     pub associativity: Associativity,
     pub precedence: usize,
     pub line: usize,

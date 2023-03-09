@@ -1,4 +1,4 @@
-use super::lexer::{Associativity, Token, TokenKind};
+use super::lexer::{Associativity, Token, TokenKind, UNARY_OPERATOR_PRECEDENCE};
 use anyhow::{anyhow, Result};
 use std::collections::VecDeque;
 
@@ -29,6 +29,24 @@ pub fn reorder(tokens: Vec<Token>) -> Result<VecDeque<Token>> {
             }
 
             TokenKind::Operator => {
+                let mut token = token;
+                if queue.back().map_or(true, |t| t.kind != TokenKind::Literal) {
+                    let new_value = match token.value.as_str() {
+                        "-" => "~".to_string(),
+                        "+" => "#".to_string(),
+                        "^" => "^".to_string(),
+                        _ => return Err(anyhow!("invalid infix operator")),
+                    };
+
+                    token = Token::operator(
+                        new_value,
+                        Associativity::Right,
+                        UNARY_OPERATOR_PRECEDENCE,
+                        token.line,
+                        token.column,
+                    )
+                }
+
                 while on_top(&stack, |t| {
                     t.precedence > token.precedence
                         || t.precedence == token.precedence && token.associativity == Associativity::Left
