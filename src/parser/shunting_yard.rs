@@ -37,12 +37,22 @@ pub fn reorder(tokens: Vec<Token>) -> Result<VecDeque<Token>> {
             | TokenValue::PowerOperator => {
                 let mut token = token;
 
-                if queue.back().map_or(true, |t| matches!(t.value, TokenValue::Literal(_))) {
+                if queue
+                    .back()
+                    .map_or(true, |t| !matches!(t.value, TokenValue::Literal(_)))
+                {
                     let new_value = match token.value {
                         TokenValue::BinaryMinus => TokenValue::UnaryMinus,
                         TokenValue::BinaryPlus => TokenValue::UnaryPlus,
-                        TokenValue::PowerOperator => TokenValue::PowerOperator,
-                        _ => return Err(anyhow!("invalid infix operator")),
+                        _ => {
+                            return Err(anyhow!(
+                                "invalid infix operator {:?} on line {} column {}. asserted it is unary because queue contains {:?}",
+                                token.value,
+                                token.line,
+                                token.column,
+                                &queue.back().map(|t| &t.value),
+                            ))
+                        }
                     };
 
                     token = Token::operator(
@@ -74,7 +84,7 @@ pub fn reorder(tokens: Vec<Token>) -> Result<VecDeque<Token>> {
                 if on_top(&stack, |t| t.value == TokenValue::LeftParenthesis) {
                     stack.pop_front(); // discard left parenthesis
                 } else {
-                    return Err(anyhow!("Unmatched parenthesis in the token vector"));
+                    return Err(anyhow!("unmatched parenthesis in the token vector"));
                 }
 
                 if on_top(&stack, |t| matches!(t.value, TokenValue::Function(_))) {
@@ -82,13 +92,20 @@ pub fn reorder(tokens: Vec<Token>) -> Result<VecDeque<Token>> {
                 }
             }
 
-            _ => return Err(anyhow!("Unknown token: {:?}", token)),
+            _ => {
+                return Err(anyhow!(
+                    "unexpected token {:?} on line {} column {}",
+                    &token.value,
+                    token.line,
+                    token.column
+                ))
+            }
         }
     }
 
     while !stack.is_empty() {
         if on_top(&stack, |t| t.value == TokenValue::LeftParenthesis) {
-            return Err(anyhow!("Unmatched parenthesis in the token vector"));
+            return Err(anyhow!("unmatched parenthesis in the token vector"));
         }
 
         queue.push_back(stack.pop_front().unwrap())
