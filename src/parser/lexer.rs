@@ -16,16 +16,6 @@ pub enum Associativity {
     Right,
 }
 
-#[derive(Debug, PartialEq, Clone)]
-pub enum TokenKind {
-    Operator,
-    Literal,
-    Parenthesis,
-    Separator,
-    Function,
-    Delimiter, // used to separate data, e.g. function arguments
-}
-
 #[derive(Debug, Clone, PartialEq)]
 pub enum TokenValue {
     BinaryPlus,
@@ -51,7 +41,6 @@ pub enum TokenValue {
 
 #[derive(Debug, Clone)]
 pub struct Token {
-    pub kind: TokenKind,
     pub value: TokenValue,
     pub associativity: Associativity,
     pub precedence: usize,
@@ -62,7 +51,6 @@ pub struct Token {
 impl Token {
     pub fn literal(literal: TokenValue, line: usize, column: usize) -> Token {
         Token {
-            kind: TokenKind::Literal,
             value: literal,
             associativity: Associativity::Left,
             precedence: LITERAL_PRECEDENCE,
@@ -73,7 +61,6 @@ impl Token {
 
     pub fn function(function: TokenValue, line: usize, column: usize) -> Token {
         Token {
-            kind: TokenKind::Function,
             value: function,
             associativity: Associativity::Left,
             precedence: FUNCTION_PRECEDENCE,
@@ -84,7 +71,6 @@ impl Token {
 
     pub fn separator(separator: TokenValue, line: usize, column: usize) -> Token {
         Token {
-            kind: TokenKind::Separator,
             value: separator,
             associativity: Associativity::Left,
             precedence: DEFAULT_PRECEDENCE,
@@ -95,7 +81,6 @@ impl Token {
 
     pub fn operator(operator: TokenValue, assoc: Associativity, prec: usize, line: usize, column: usize) -> Token {
         Token {
-            kind: TokenKind::Operator,
             value: operator,
             associativity: assoc,
             precedence: prec,
@@ -106,7 +91,6 @@ impl Token {
 
     pub fn parenthesis(parenthesis: TokenValue, line: usize, column: usize) -> Token {
         Token {
-            kind: TokenKind::Parenthesis,
             value: parenthesis,
             associativity: Associativity::Left,
             precedence: DEFAULT_PRECEDENCE,
@@ -117,7 +101,6 @@ impl Token {
 
     pub fn delimiter(delimiter: TokenValue, line: usize, column: usize) -> Token {
         Token {
-            kind: TokenKind::Delimiter,
             value: delimiter,
             associativity: Associativity::Left,
             precedence: FUNCTION_PRECEDENCE,
@@ -143,6 +126,7 @@ pub fn tokenize(expression: String) -> Result<Vec<Token>> {
     let mut cursor;
     let mut current_column = 0;
     let mut current_line = 1;
+
     while {
         cursor = char_sequence.next();
         current_column += 1;

@@ -1,4 +1,4 @@
-use super::lexer::{Associativity, Token, TokenKind, TokenValue, UNARY_OPERATOR_PRECEDENCE};
+use super::lexer::{Associativity, Token, TokenValue, UNARY_OPERATOR_PRECEDENCE};
 use anyhow::{anyhow, Result};
 use std::collections::VecDeque;
 
@@ -14,15 +14,15 @@ pub fn reorder(tokens: Vec<Token>) -> Result<VecDeque<Token>> {
     let mut queue = VecDeque::new();
 
     for token in tokens {
-        match token.kind {
-            TokenKind::Literal => queue.push_back(token),
+        match token.value {
+            TokenValue::Literal(_) => queue.push_back(token),
 
-            TokenKind::Function => {
+            TokenValue::Function(_) => {
                 queue.push_back(Token::delimiter(TokenValue::FunctionArgumentEnd, 0, 0));
                 stack.push_front(token);
             }
 
-            TokenKind::Separator => {
+            TokenValue::CommaSeparator | TokenValue::SemicolonSeparator => {
                 while on_top(&stack, |t| {
                     t.value != TokenValue::LeftParenthesis && t.precedence >= token.precedence
                 }) {
@@ -30,10 +30,14 @@ pub fn reorder(tokens: Vec<Token>) -> Result<VecDeque<Token>> {
                 }
             }
 
-            TokenKind::Operator => {
+            TokenValue::BinaryMinus
+            | TokenValue::BinaryPlus
+            | TokenValue::ScalarMultiplication
+            | TokenValue::ScalarDivision
+            | TokenValue::PowerOperator => {
                 let mut token = token;
-                if queue.back().map_or(true, |t| t.kind != TokenKind::Literal) {
-                    // map binary token to unary one
+
+                if queue.back().map_or(true, |t| matches!(t.value, TokenValue::Literal(_))) {
                     let new_value = match token.value {
                         TokenValue::BinaryMinus => TokenValue::UnaryMinus,
                         TokenValue::BinaryPlus => TokenValue::UnaryPlus,
@@ -60,9 +64,9 @@ pub fn reorder(tokens: Vec<Token>) -> Result<VecDeque<Token>> {
                 stack.push_front(token)
             }
 
-            TokenKind::Parenthesis if token.value == TokenValue::LeftParenthesis => stack.push_front(token),
+            TokenValue::LeftParenthesis => stack.push_front(token),
 
-            TokenKind::Parenthesis if token.value == TokenValue::RightParenthesis => {
+            TokenValue::RightParenthesis => {
                 while on_top(&stack, |t| t.value != TokenValue::LeftParenthesis) {
                     queue.push_back(stack.pop_front().unwrap())
                 }
@@ -73,7 +77,7 @@ pub fn reorder(tokens: Vec<Token>) -> Result<VecDeque<Token>> {
                     return Err(anyhow!("Unmatched parenthesis in the token vector"));
                 }
 
-                if on_top(&stack, |t| t.kind == TokenKind::Function) {
+                if on_top(&stack, |t| matches!(t.value, TokenValue::Function(_))) {
                     queue.push_back(stack.pop_front().unwrap())
                 }
             }
