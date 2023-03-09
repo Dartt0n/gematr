@@ -14,9 +14,7 @@ pub struct SyntaxTree {
 
 impl SyntaxTree{
     pub fn build(rpn_tokens: VecDeque<Token>) -> Result<SyntaxTree> {
-
-
-        return Err(anyhow!("Unimplemented"))
+        todo!("Build tree by parsing deque from the end");
     }
 }
 
