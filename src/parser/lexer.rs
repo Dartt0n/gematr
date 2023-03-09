@@ -186,11 +186,11 @@ pub fn tokenize(expression: String) -> Result<Vec<Token>, ()> {
     }
 
     if current_number.len() != 0 {
-        tokens.push(Token::literal(current_number, current_line, current_column - current_number.len() + 1));
+        tokens.push(Token::literal(current_number.clone(), current_line, current_column - current_number.len() + 1));
     }
 
     if current_function.len() != 0 {
-        tokens.push(Token::function(current_function, current_line, current_column - current_function.len() + 1))
+        tokens.push(Token::function(current_function.clone(), current_line, current_column - current_function.len() + 1))
     }
 
     return Ok(tokens);
