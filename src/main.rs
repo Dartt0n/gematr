@@ -10,9 +10,9 @@ fn main() {
     let tokens = parser::lexer::tokenize(content).unwrap();
     let rpn = parser::shunting_yard::reorder(tokens).unwrap();
 
-    println!("Output Reverse Polish Notation:");
+    println!("Tokenization in Reverse Polish Notation:");
     for i in rpn.iter() {
-        print!("{} ", i.value);
+        print!("{:?} ", i.value);
     }
     println!()
 }
