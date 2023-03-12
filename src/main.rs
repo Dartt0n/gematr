@@ -1,23 +1,16 @@
 mod math;
 mod parser;
+use anyhow::Result;
 
-use std::fs;
+fn main() -> Result<()> {
+    let expr = "5 + 5.6 + 5..6";
+    println!("Input Expression:\n{}", &expr);
 
-fn main() {
-    let content = fs::read_to_string("examples/expr3.rth").expect("Failed to read file");
-    println!("Input Expression:\n{}", &content);
-
-    let tokens = parser::lexer::tokenize(content).unwrap();
-    let rpn = parser::shunting_yard::reorder(tokens);
-
-    match rpn {
-        Err(e) => println!("Error: {}", e),
-        Ok(v) => {
-            println!("Tokenization in Reverse Polish Notation:");
-            for i in v.iter() {
-                print!("{:?} ", i.value);
-            }
-            println!()
-        }
+    let tokens = parser::lexer::tokenize(expr)?;
+    println!("Tokens:");
+    for token in tokens.iter() {
+        print!("{} ", token.value);
     }
+
+    Ok(())
 }
