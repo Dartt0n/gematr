@@ -3,13 +3,13 @@ use rust_decimal::Decimal;
 #[repr(usize)]
 #[derive(Debug, Clone, PartialEq, PartialOrd)]
 pub enum Precedence {
-    DEFAULT         = 0,
-    LITERAL         = 1,
-    OPERATOR_LOW    = 2,
-    OPERATOR_MEDIUM = 3,
-    OPERATOR_HIGH   = 4,
-    FUNCTION        = 5,
-    OPERATOR_UNARY  = 6,
+    Default        = 0,
+    Literal        = 1,
+    OperatorLow    = 2,
+    OperatorMedium = 3,
+    OperatorHigh   = 4,
+    Function       = 5,
+    OperatorUnary  = 6,
 }
 
 #[derive(Debug, PartialEq, Clone)]
@@ -34,7 +34,6 @@ pub enum Value {
     RightParenthesis,
 
     CommaSeparator,
-    SemicolonSeparator,
 
     Function(String),
 
@@ -55,7 +54,7 @@ impl Token {
         Token {
             value:         literal,
             associativity: Associativity::Left,
-            precedence:    Precedence::LITERAL,
+            precedence:    Precedence::Literal,
             line:          line,
             column:        column,
         }
@@ -65,7 +64,7 @@ impl Token {
         Token {
             value:         function,
             associativity: Associativity::Left,
-            precedence:    Precedence::FUNCTION,
+            precedence:    Precedence::Function,
             line:          line,
             column:        column,
         }
@@ -75,7 +74,7 @@ impl Token {
         Token {
             value:         separator,
             associativity: Associativity::Left,
-            precedence:    Precedence::DEFAULT,
+            precedence:    Precedence::Default,
             line:          line,
             column:        column,
         }
@@ -95,7 +94,7 @@ impl Token {
         Token {
             value:         parenthesis,
             associativity: Associativity::Left,
-            precedence:    Precedence::DEFAULT,
+            precedence:    Precedence::Default,
             line:          line,
             column:        column,
         }
@@ -105,7 +104,7 @@ impl Token {
         Token {
             value:         delimeter,
             associativity: Associativity::Left,
-            precedence:    Precedence::FUNCTION,
+            precedence:    Precedence::Function,
             line:          line,
             column:        column,
         }

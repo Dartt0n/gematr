@@ -1,16 +1,17 @@
 mod math;
 mod parser;
 use anyhow::Result;
+use std::fs;
 
 fn main() -> Result<()> {
-    let expr = "5 + 5.6 + 5..6";
+    let expr = fs::read_to_string("examples/expr7.rth").expect("failed to read file");
+
     println!("Input Expression:\n{}", &expr);
 
-    let tokens = parser::lexer::tokenize(expr)?;
-    println!("Tokens:");
-    for token in tokens.iter() {
-        print!("{} ", token.value);
-    }
+    let tokens = parser::lexer::tokenize(&expr)?;
+
+    // TODO: Refactor (again)
+    parser::parse(tokens);
 
     Ok(())
 }
