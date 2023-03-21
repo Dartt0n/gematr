@@ -1,5 +1,7 @@
 # Ruth
 
-Warning: Name will be changed soon
-Warning: WIP
-Warning: Unstable
+warning: name will be changed soon
+
+warning: WIP
+
+warning: unstable
