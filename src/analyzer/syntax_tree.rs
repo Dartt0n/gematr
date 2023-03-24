@@ -1,4 +1,4 @@
-use std::fmt::Display;
+use std::{collections::VecDeque, fmt::Display};
 
 use super::token::Token;
 use anyhow::{anyhow, Result};
@@ -8,7 +8,7 @@ pub struct SyntaxTreeNode {
     pub value:    Token,
     pub index:    usize,
     pub parent:   Option<usize>,
-    pub children: Vec<usize>,
+    pub children: VecDeque<usize>,
 }
 
 #[derive(Debug)]
@@ -23,7 +23,7 @@ impl ArenaSyntaxTree {
                 value:    root,
                 index:    0,
                 parent:   None,
-                children: vec![],
+                children: VecDeque::new(),
             }],
         }
     }
@@ -34,12 +34,12 @@ impl ArenaSyntaxTree {
 
     pub fn insert(&mut self, parent: usize, child: Token) -> usize {
         let child_id = self.trees.len();
-        self.trees[parent].children.push(child_id);
+        self.trees[parent].children.push_front(child_id);
         self.trees.push(SyntaxTreeNode {
             value:    child,
             index:    child_id,
             parent:   Some(parent),
-            children: vec![],
+            children: VecDeque::new(),
         });
         return child_id;
     }
