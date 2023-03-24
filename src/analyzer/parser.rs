@@ -1,24 +1,78 @@
 use std::collections::VecDeque;
 
 use super::{
-    syntax_tree::SyntaxTree,
+    syntax_tree::ArenaSyntaxTree,
     token::{self, Token},
 };
 use anyhow::{anyhow, Result};
 
-pub fn build_tree<TokenIter>(token_stream: TokenIter) -> Result<SyntaxTree>
-where
-    TokenIter: Iterator<Item = Token>,
-{
-    let queue = reverse_polish(token_stream)?;
+pub fn parse<T: IntoIterator<Item = Token>>(token_stream: T) -> Result<ArenaSyntaxTree> {
+    let mut queue = reverse_polish(token_stream)?;
 
-    todo!("build tree from reverse polish notation")
+    let token = match queue.pop_back() {
+        Some(t) => t,
+        None => return Err(anyhow!("empty expression")),
+    };
+
+    let mut arena = ArenaSyntaxTree::new(token);
+    let mut current_index = 0;
+
+    while arena.get(current_index).is_some() {
+        let current_node = arena.get(current_index).unwrap();
+
+        if matches!(current_node.value.kind, token::Kind::UnaryOperator(_)) {
+            if current_node.children.len() > 1 {
+                return Err(anyhow!("invalid number of arguments for unary operator"));
+            }
+            if current_node.children.len() == 1 {
+                current_index = match current_node.parent {
+                    Some(i) => i,
+                    None => break,
+                };
+                continue;
+            }
+        }
+
+        if matches!(current_node.value.kind, token::Kind::UnaryOperator(_)) {
+            if current_node.children.len() > 2 {
+                return Err(anyhow!("invalid number of arguments for binary operator"));
+            }
+            if current_node.children.len() == 2 {
+                current_index = match current_node.parent {
+                    Some(i) => i,
+                    None => break,
+                };
+                continue;
+            }
+        }
+
+        let token = match queue.pop_back() {
+            Some(t) => t,
+            None => break,
+        };
+
+        match token.kind {
+            token::Kind::Number(_) => {
+                arena.insert(current_index, token);
+            }
+
+            token::Kind::Func(_) | token::Kind::UnaryOperator(_) | token::Kind::BinaryOperator(_) => {
+                current_index = arena.insert(current_index, token);
+            }
+
+            token::Kind::Delimeter(token::Delim::FuncArgs) => match current_node.parent {
+                Some(i) => current_index = i,
+                None => break,
+            },
+
+            _ => {}
+        }
+    }
+
+    Ok(arena)
 }
 
-pub fn reverse_polish<TokenIter>(token_stream: TokenIter) -> Result<VecDeque<Token>>
-where
-    TokenIter: Iterator<Item = Token>,
-{
+pub fn reverse_polish<T: IntoIterator<Item = Token>>(token_stream: T) -> Result<VecDeque<Token>> {
     let mut stack = VecDeque::<Token>::new();
     let mut queue = VecDeque::<Token>::new();
 

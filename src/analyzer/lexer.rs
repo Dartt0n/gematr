@@ -2,10 +2,7 @@ use anyhow::{anyhow, Result};
 
 use super::token::{self, Token};
 
-pub fn tokenize<CharIter>(char_stream: CharIter) -> Result<Vec<Token>>
-where
-    CharIter: Iterator<Item = char>,
-{
+pub fn tokenize<T: IntoIterator<Item = char>>(char_stream: T) -> Result<Vec<Token>> {
     let mut tokens = Vec::new();
 
     let mut crnt_number = String::new();

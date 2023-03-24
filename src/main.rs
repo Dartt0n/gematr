@@ -4,22 +4,13 @@ use anyhow::Result;
 use std::fs;
 
 fn main() -> Result<()> {
-    let expr = fs::read_to_string("examples/expr7.rth").expect("failed to read file");
+    let expr = fs::read_to_string("examples/expr6.rth").expect("failed to read file");
     println!("Input Expression:\n\t{}", &expr);
 
     let tokens = analyzer::lexer::tokenize(expr.chars())?;
+    let tree_arena = analyzer::parser::parse(tokens)?;
 
-    println!("Tokens:");
-    for t in &tokens {
-        println!("\t{:?}", t.kind);
-    }
-
-    let rpn = analyzer::parser::reverse_polish(tokens.into_iter())?;
-
-    println!("Reverse Polish:");
-    for t in &rpn {
-        println!("\t{:?}", t.kind);
-    }
+    println!("Syntax Tree:\n{}", tree_arena);
 
     // https://cs.lmu.edu/~ray/notes/compilerarchitecture/
 
