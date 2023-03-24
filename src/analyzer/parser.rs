@@ -33,7 +33,7 @@ pub fn parse<T: IntoIterator<Item = Token>>(token_stream: T) -> Result<ArenaSynt
             }
         }
 
-        if matches!(current_node.value.kind, token::Kind::UnaryOperator(_)) {
+        if matches!(current_node.value.kind, token::Kind::BinaryOperator(_)) {
             if current_node.children.len() > 2 {
                 return Err(anyhow!("invalid number of arguments for binary operator"));
             }
