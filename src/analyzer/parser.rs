@@ -14,28 +14,20 @@ pub fn parse<T: IntoIterator<Item = Token>>(token_stream: T) -> Result<SyntaxTre
         None => return Err(anyhow!("empty expression")),
     };
 
-    let mut syntax_tree = SyntaxTree::new();
-    let root_node = Rc::new(SyntaxNode::new(token));
-    syntax_tree.root = Some(Rc::clone(&root_node));
+    let syntax_tree = SyntaxTree::with_root(SyntaxNode::new(token).into());
+    let mut cursor = syntax_tree.get_root();
 
-    let mut current_node = Some(Rc::clone(&root_node));
+    while cursor.is_some() {
+        // Option::clone will trigger Rc::clone
+        let node = Option::clone(&cursor).unwrap();
 
-    while current_node.is_some() {
-        let node = current_node.clone().unwrap();
-
-        if matches!(node.value.kind, token::Kind::UnaryOperator(_)) && node.children.borrow().len() == 1 {
-            match node.parent.borrow().upgrade() {
-                Some(ref parent) => current_node = Some(Rc::clone(parent)),
-                None => break,
-            }
+        if matches!(node.value.kind, token::Kind::UnaryOperator(_)) && node.get_children().len() == 1 {
+            cursor = node.get_parent_clone();
             continue;
         }
 
-        if matches!(node.value.kind, token::Kind::BinaryOperator(_)) && node.children.borrow().len() == 2 {
-            match node.parent.borrow().upgrade() {
-                Some(ref parent) => current_node = Some(Rc::clone(parent)),
-                None => break,
-            }
+        if matches!(node.value.kind, token::Kind::BinaryOperator(_)) && node.get_children().len() == 2 {
+            cursor = node.get_parent_clone();
             continue;
         }
 
@@ -48,21 +40,18 @@ pub fn parse<T: IntoIterator<Item = Token>>(token_stream: T) -> Result<SyntaxTre
             token::Kind::Number(_) => {
                 let new_node = Rc::new(SyntaxNode::new(token));
 
-                node.children.borrow_mut().push(Rc::clone(&new_node));
-                *new_node.parent.borrow_mut() = Rc::downgrade(&node);
+                SyntaxTree::add_child(node, new_node);
             }
 
             token::Kind::Func(_) | token::Kind::UnaryOperator(_) | token::Kind::BinaryOperator(_) => {
                 let new_node = Rc::new(SyntaxNode::new(token));
+                cursor = Some(Rc::clone(&new_node));
 
-                node.children.borrow_mut().push(Rc::clone(&new_node));
-                *new_node.parent.borrow_mut() = Rc::downgrade(&node);
-
-                current_node = Some(Rc::clone(&new_node));
+                SyntaxTree::add_child(node, new_node);
             }
 
             token::Kind::Delimeter(token::Delim::FuncArgs) => {
-                current_node = node.parent.borrow().upgrade();
+                cursor = node.get_parent();
             }
 
             _ => {}

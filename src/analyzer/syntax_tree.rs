@@ -1,5 +1,5 @@
 use std::{
-    cell::RefCell,
+    cell::{Ref, RefCell, RefMut},
     fmt::{Display, Formatter},
     rc::{Rc, Weak},
 };
@@ -36,11 +36,56 @@ impl SyntaxNode {
 
         Ok(())
     }
+
+    pub fn get_parent(&self) -> Option<Rc<SyntaxNode>> {
+        self.parent.borrow().upgrade()
+    }
+
+    pub fn get_parent_clone(&self) -> Option<Rc<SyntaxNode>> {
+        self.get_parent().map(|p| Rc::clone(&p))
+    }
+
+    pub fn set_parent(&self, parent: Rc<SyntaxNode>) {
+        *self.parent.borrow_mut() = Rc::downgrade(&parent);
+    }
+
+    pub fn get_children(&self) -> Ref<Vec<Rc<SyntaxNode>>> {
+        self.children.borrow()
+    }
+
+    pub fn get_children_mut(&self) -> RefMut<Vec<Rc<SyntaxNode>>> {
+        self.children.borrow_mut()
+    }
+
+    pub fn add_child(&self, child: Rc<SyntaxNode>) {
+        self.get_children_mut().push(child);
+    }
 }
 
 impl SyntaxTree {
     pub fn new() -> Self {
         Self { root: None }
+    }
+
+    pub fn with_root(root_node: Option<Rc<SyntaxNode>>) -> Self {
+        Self { root: root_node }
+    }
+
+    pub fn set_root(&mut self, node: Option<Rc<SyntaxNode>>) {
+        self.root = node;
+    }
+
+    pub fn get_root(&self) -> Option<Rc<SyntaxNode>> {
+        if let Some(ref r) = self.root {
+            Some(Rc::clone(&r))
+        } else {
+            None
+        }
+    }
+
+    pub fn add_child(parent: Rc<SyntaxNode>, child: Rc<SyntaxNode>) {
+        parent.add_child(child.clone());
+        child.set_parent(parent);
     }
 }
 
@@ -57,5 +102,11 @@ impl Display for SyntaxTree {
         } else {
             writeln!(f, "{{}}")
         }
+    }
+}
+
+impl From<SyntaxNode> for Option<Rc<SyntaxNode>> {
+    fn from(value: SyntaxNode) -> Self {
+        return Some(value.into());
     }
 }
