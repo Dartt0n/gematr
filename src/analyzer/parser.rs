@@ -1,12 +1,12 @@
-use std::collections::VecDeque;
+use std::{collections::VecDeque, rc::Rc};
 
 use super::{
-    syntax_tree::ArenaSyntaxTree,
+    syntax_tree::{SyntaxNode, SyntaxTree},
     token::{self, Token},
 };
 use anyhow::{anyhow, Result};
 
-pub fn parse<T: IntoIterator<Item = Token>>(token_stream: T) -> Result<ArenaSyntaxTree> {
+pub fn parse<T: IntoIterator<Item = Token>>(token_stream: T) -> Result<SyntaxTree> {
     let mut queue = reverse_polish(token_stream)?;
 
     let token = match queue.pop_back() {
@@ -14,36 +14,29 @@ pub fn parse<T: IntoIterator<Item = Token>>(token_stream: T) -> Result<ArenaSynt
         None => return Err(anyhow!("empty expression")),
     };
 
-    let mut arena = ArenaSyntaxTree::new(token);
-    let mut current_index = 0;
+    let mut syntax_tree = SyntaxTree::new();
+    let root_node = Rc::new(SyntaxNode::new(token));
+    syntax_tree.root = Some(Rc::clone(&root_node));
 
-    while arena.get(current_index).is_some() {
-        let current_node = arena.get(current_index).unwrap();
+    let mut current_node = Some(Rc::clone(&root_node));
 
-        if matches!(current_node.value.kind, token::Kind::UnaryOperator(_)) {
-            if current_node.children.len() > 1 {
-                return Err(anyhow!("invalid number of arguments for unary operator"));
+    while current_node.is_some() {
+        let node = current_node.clone().unwrap();
+
+        if matches!(node.value.kind, token::Kind::UnaryOperator(_)) && node.children.borrow().len() == 1 {
+            match node.parent.borrow().upgrade() {
+                Some(ref parent) => current_node = Some(Rc::clone(parent)),
+                None => break,
             }
-            if current_node.children.len() == 1 {
-                current_index = match current_node.parent {
-                    Some(i) => i,
-                    None => break,
-                };
-                continue;
-            }
+            continue;
         }
 
-        if matches!(current_node.value.kind, token::Kind::BinaryOperator(_)) {
-            if current_node.children.len() > 2 {
-                return Err(anyhow!("invalid number of arguments for binary operator"));
+        if matches!(node.value.kind, token::Kind::BinaryOperator(_)) && node.children.borrow().len() == 2 {
+            match node.parent.borrow().upgrade() {
+                Some(ref parent) => current_node = Some(Rc::clone(parent)),
+                None => break,
             }
-            if current_node.children.len() == 2 {
-                current_index = match current_node.parent {
-                    Some(i) => i,
-                    None => break,
-                };
-                continue;
-            }
+            continue;
         }
 
         let token = match queue.pop_back() {
@@ -53,23 +46,30 @@ pub fn parse<T: IntoIterator<Item = Token>>(token_stream: T) -> Result<ArenaSynt
 
         match token.kind {
             token::Kind::Number(_) => {
-                arena.insert(current_index, token);
+                let new_node = Rc::new(SyntaxNode::new(token));
+
+                node.children.borrow_mut().push(Rc::clone(&new_node));
+                *new_node.parent.borrow_mut() = Rc::downgrade(&node);
             }
 
             token::Kind::Func(_) | token::Kind::UnaryOperator(_) | token::Kind::BinaryOperator(_) => {
-                current_index = arena.insert(current_index, token);
+                let new_node = Rc::new(SyntaxNode::new(token));
+
+                node.children.borrow_mut().push(Rc::clone(&new_node));
+                *new_node.parent.borrow_mut() = Rc::downgrade(&node);
+
+                current_node = Some(Rc::clone(&new_node));
             }
 
-            token::Kind::Delimeter(token::Delim::FuncArgs) => match current_node.parent {
-                Some(i) => current_index = i,
-                None => break,
-            },
+            token::Kind::Delimeter(token::Delim::FuncArgs) => {
+                current_node = node.parent.borrow().upgrade();
+            }
 
             _ => {}
         }
     }
 
-    Ok(arena)
+    Ok(syntax_tree)
 }
 
 pub fn reverse_polish<T: IntoIterator<Item = Token>>(token_stream: T) -> Result<VecDeque<Token>> {
@@ -89,7 +89,7 @@ pub fn reverse_polish<T: IntoIterator<Item = Token>>(token_stream: T) -> Result<
                 }
 
                 if on_top(&stack, |t| t.kind == token::Kind::Parenthesis(token::Paren::Open)) {
-                    stack.pop_front(); // discard left parenthesis
+                    stack.pop_front();
                 } else {
                     return Err(anyhow!("unmatched parenthesis in the token stream"));
                 }
