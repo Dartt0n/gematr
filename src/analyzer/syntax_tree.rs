@@ -49,6 +49,10 @@ impl SyntaxNode {
         *self.parent.borrow_mut() = Rc::downgrade(&parent);
     }
 
+    pub fn nullify_parent(&self) {
+        *self.parent.borrow_mut() = Weak::new();
+    }
+
     pub fn get_children(&self) -> Ref<Vec<Rc<SyntaxNode>>> {
         self.children.borrow()
     }
@@ -59,6 +63,28 @@ impl SyntaxNode {
 
     pub fn add_child(&self, child: Rc<SyntaxNode>) {
         self.get_children_mut().push(child);
+    }
+
+    pub fn find_child(&self, child: Rc<SyntaxNode>) -> Option<usize> {
+        let child_ptr = Rc::as_ptr(&child);
+        let mut index = None;
+
+        for (i, c) in self.get_children().iter().enumerate() {
+            let c_ptr = Rc::as_ptr(c);
+
+            if child_ptr == c_ptr {
+                index = Some(i);
+                break;
+            }
+        }
+
+        return index;
+    }
+
+    pub fn remove_child(&self, child: Rc<SyntaxNode>) {
+        if let Some(index) = self.find_child(child) {
+            self.get_children_mut().remove(index);
+        }
     }
 }
 
@@ -86,6 +112,13 @@ impl SyntaxTree {
     pub fn add_child(parent: Rc<SyntaxNode>, child: Rc<SyntaxNode>) {
         parent.add_child(child.clone());
         child.set_parent(parent);
+    }
+
+    pub fn replace_child(parent: Rc<SyntaxNode>, original_child: Rc<SyntaxNode>, new_child: Rc<SyntaxNode>) {
+        if let Some(index) = parent.find_child(original_child) {
+            parent.get_children_mut()[index] = Rc::clone(&new_child);
+            new_child.set_parent(parent);
+        }
     }
 }
 

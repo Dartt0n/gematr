@@ -4,7 +4,7 @@ use anyhow::Result;
 use std::fs;
 
 fn main() -> Result<()> {
-    let expr = fs::read_to_string("examples/expr1.gm").expect("failed to read file");
+    let expr = fs::read_to_string("examples/expr9.gm").expect("failed to read file");
     println!("Input Expression:\n\t{}", &expr);
 
     let tokens = analyzer::lexer::tokenize(expr.chars())?;
@@ -12,9 +12,9 @@ fn main() -> Result<()> {
 
     println!("Syntax Tree:\n{}", tree);
 
-    // let tree = analyzer::semantic_analyzer::opimize(&mut tree)?;
+    let tree = analyzer::semantic_analyzer::opimize(tree)?;
 
-    // println!("Optimized Syntax Tree:\n{}", tree);
+    println!("Optimized Syntax Tree:\n{}", tree);
     // https://cs.lmu.edu/~ray/notes/compilerarchitecture/
 
     Ok(())
