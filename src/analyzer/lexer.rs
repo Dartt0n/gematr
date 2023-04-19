@@ -95,6 +95,7 @@ pub fn tokenize<T: IntoIterator<Item = char>>(char_stream: T) -> Result<Vec<Toke
             matches!(t.kind, token::Kind::Parenthesis(token::Paren::Open))
                 || matches!(t.kind, token::Kind::BinaryOperator(_))
                 || matches!(t.kind, token::Kind::UnaryOperator(_))
+                || matches!(t.kind, token::Kind::Delimeter(_))
         }) {
             tokens.push(Token::unary_op(cc, crnt_line, crnt_column)?);
             continue;
