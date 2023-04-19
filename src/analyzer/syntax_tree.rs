@@ -115,8 +115,9 @@ impl SyntaxTree {
     }
 
     pub fn replace_child(parent: Rc<SyntaxNode>, original_child: Rc<SyntaxNode>, new_child: Rc<SyntaxNode>) {
-        if let Some(index) = parent.find_child(original_child) {
+        if let Some(index) = parent.find_child(Rc::clone(&original_child)) {
             parent.get_children_mut()[index] = Rc::clone(&new_child);
+            original_child.nullify_parent();
             new_child.set_parent(parent);
         }
     }

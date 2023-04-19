@@ -36,7 +36,7 @@ impl Associativity {
     }
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum BinOps {
     Plus,
     Minus,
@@ -62,7 +62,7 @@ impl TryFrom<char> for BinOps {
     }
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum UnOps {
     Plus,
     Minus,
@@ -80,7 +80,7 @@ impl TryFrom<char> for UnOps {
     }
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum Paren {
     Close,
     Open,
@@ -98,7 +98,7 @@ impl TryFrom<char> for Paren {
     }
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum Delim {
     FuncArgs,
     Comma,
@@ -115,7 +115,7 @@ impl TryFrom<char> for Delim {
     }
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum Kind {
     Number(String),
     Func(String),
@@ -125,7 +125,7 @@ pub enum Kind {
     Delimeter(Delim),
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct Token {
     pub assoc:  Associativity,
     pub prec:   Precedence,
