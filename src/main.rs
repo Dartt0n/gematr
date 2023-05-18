@@ -1,10 +1,10 @@
 mod analyzer;
-mod math;
+mod interpreter;
 use anyhow::Result;
 use std::fs;
 
 fn main() -> Result<()> {
-    let expr = fs::read_to_string("examples/expr11.gm").expect("failed to read file");
+    let expr = fs::read_to_string("examples/expr12.gm").expect("failed to read file");
     println!("Input Expression:\n\t{}", &expr);
 
     let tokens = analyzer::lexer::tokenize(expr.chars())?;
@@ -17,5 +17,6 @@ fn main() -> Result<()> {
     println!("Optimized Syntax Tree:\n{}", tree);
     // https://cs.lmu.edu/~ray/notes/compilerarchitecture/
 
+    println!("Result: {}", interpreter::interprete(tree));
     Ok(())
 }

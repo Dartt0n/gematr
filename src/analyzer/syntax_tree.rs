@@ -1,7 +1,7 @@
 use std::{
     cell::{Ref, RefCell, RefMut},
     fmt::{Display, Formatter},
-    rc::{Rc, Weak},
+    rc::{Rc, Weak}, collections::VecDeque,
 };
 
 use super::token::Token;
@@ -89,6 +89,7 @@ impl SyntaxNode {
 }
 
 impl SyntaxTree {
+    #[allow(dead_code)]
     pub fn new() -> Self {
         Self { root: None }
     }
@@ -119,6 +120,50 @@ impl SyntaxTree {
             parent.get_children_mut()[index] = Rc::clone(&new_child);
             original_child.nullify_parent();
             new_child.set_parent(parent);
+        }
+    }
+
+    pub fn dfs<F>(&self, func: F) where F: Fn(Rc<SyntaxNode>) {
+        let mut stack = VecDeque::<Rc<SyntaxNode>>::new();
+
+        let root = if let Some(r) = self.get_root() {
+            r
+        }  else {
+            return;
+        };
+
+        stack.push_back(root);
+
+        while !stack.is_empty() {
+            let node = stack.pop_back().unwrap();
+
+            func(Rc::clone(&node));
+
+            for child in node.get_children().iter() {
+                stack.push_back(Rc::clone(child));
+            }
+        }
+    }
+
+    pub fn bfs<F>(&self, func: F) where F: Fn(Rc<SyntaxNode>) {
+        let mut queue = VecDeque::<Rc<SyntaxNode>>::new();
+
+        let root = if let Some(r) = self.get_root() {
+            r
+        } else {
+            return;
+        };
+
+        queue.push_front(root);
+
+        while !queue.is_empty() {
+            let node = queue.pop_back().unwrap();
+
+            func(Rc::clone(&node));
+
+            for child in node.get_children().iter() {
+                queue.push_front(Rc::clone(child));
+            }
         }
     }
 }

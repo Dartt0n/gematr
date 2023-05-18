@@ -106,7 +106,6 @@ pub fn tokenize<T: IntoIterator<Item = char>>(char_stream: T) -> Result<Vec<Toke
             continue;
         }
 
-        // TODO: report system
         println!(
             "warning: symbol '{}' on line {} column {} is ignored",
             cc, crnt_line, crnt_column
